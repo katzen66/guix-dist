@@ -1,0 +1,19 @@
+---
+- name: Guix cache server setup
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Copy systemd service file
+      become: yes
+      ansible.builtin.copy:
+        src: guix-publish.service
+        dest: /etc/systemd/system/guix-publish.service
+
+    - name: Setup systemd service
+      become: yes
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        enabled: true
+        state: started
+        masked: false
+        name: guix-publish
