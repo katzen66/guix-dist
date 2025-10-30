@@ -3,7 +3,7 @@ Description=Guix package sharing over LAN
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c "guix publish -a -p 33"
+ExecStart=/bin/bash -c "guix publish -a -p 33 --user=guix-dist"
 
 [Install]
 WantedBy=multi-user.target

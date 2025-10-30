@@ -3,17 +3,26 @@
   hosts: all
   gather_facts: true
   tasks:
+    - name: Initialize secondary guix system account
+      become: true
+      ansible.builtin.user:
+        name: guix-dist
+        system: true
+        state: present
+        home: /opt/guix-dist
+        password_lock: true
+
     - name: Copy systemd service file
-      become: yes
+      become: true
       ansible.builtin.copy:
         src: guix-publish.service
         dest: /etc/systemd/system/guix-publish.service
 
     - name: Setup systemd service
-      become: yes
+      become: true
       ansible.builtin.systemd_service:
         daemon_reload: true
         enabled: true
-        state: started
+        state: restarted
         masked: false
         name: guix-publish
