@@ -1,2 +1,4 @@
 known_hosts
 *_arch
+machines.scm
+key*

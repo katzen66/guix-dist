@@ -14,18 +14,10 @@
             home: /opt/guix-dist
             password_lock: true
 
-        - name: Copy systemd service file
+        - name: Copy guix-publish systemd service file
           ansible.builtin.copy:
             src: guix-publish.service
             dest: /etc/systemd/system/guix-publish.service
-
-        - name: Setup systemd service
-          ansible.builtin.systemd_service:
-            daemon_reload: true
-            enabled: true
-            state: restarted
-            masked: false
-            name: guix-publish
       become: true
 
     - name: Get supported architectures
@@ -40,3 +32,55 @@
       copy:
         content: "{{ architecture.stdout }}"
         dest: "{{ local_filename }}"
+
+    - name: Generate machines.scm
+      delegate_to: localhost
+      run_once: true
+      ansible.builtin.shell: "./generate_build_machines.sh > machines.scm"
+
+    - block:
+      - name: Copy private guix-dist key
+        ansible.builtin.copy:
+          src: key
+          dest: /opt/guix-dist/key.priv
+          owner: root
+          group: root
+          mode: 0444
+
+      - name: Ensure local ssh folder is available
+        ansible.builtin.file:
+          path: /opt/guix-dist/.ssh
+          state: directory
+          owner: guix-dist
+          group: guix-dist
+          mode: 0755
+
+      - name: Copy public guix-dist key
+        ansible.builtin.copy:
+          src: key.pub
+          dest: /opt/guix-dist/.ssh/authorized_keys
+          owner: guix-dist
+          group: guix-dist
+          mode: 0644
+
+      - name: Copy build machines file
+        ansible.builtin.copy:
+          src: machines.scm
+          dest: /etc/guix/machines.scm
+          owner: root
+          group: root
+          mode: 0444
+
+      - name: Reload guix-daemon
+        ansible.builtin.systemd_service:
+          state: restarted
+          name: guix-daemon
+
+      - name: Setup systemd service
+        ansible.builtin.systemd_service:
+          daemon_reload: true
+          enabled: true
+          state: restarted
+          masked: false
+          name: guix-publish
+      become: true
