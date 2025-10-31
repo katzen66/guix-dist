@@ -5,29 +5,28 @@
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts'
   gather_facts: true
   tasks:
-    - name: Initialize secondary guix system account
-      become: true
-      ansible.builtin.user:
-        name: guix-dist
-        system: true
-        state: present
-        home: /opt/guix-dist
-        password_lock: true
+    - block:
+        - name: Initialize secondary guix system account
+          ansible.builtin.user:
+            name: guix-dist
+            system: true
+            state: present
+            home: /opt/guix-dist
+            password_lock: true
 
-    - name: Copy systemd service file
-      become: true
-      ansible.builtin.copy:
-        src: guix-publish.service
-        dest: /etc/systemd/system/guix-publish.service
+        - name: Copy systemd service file
+          ansible.builtin.copy:
+            src: guix-publish.service
+            dest: /etc/systemd/system/guix-publish.service
 
-    - name: Setup systemd service
+        - name: Setup systemd service
+          ansible.builtin.systemd_service:
+            daemon_reload: true
+            enabled: true
+            state: restarted
+            masked: false
+            name: guix-publish
       become: true
-      ansible.builtin.systemd_service:
-        daemon_reload: true
-        enabled: true
-        state: restarted
-        masked: false
-        name: guix-publish
 
     - name: Get supported architectures
       ansible.builtin.shell: "uname -m"
