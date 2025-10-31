@@ -1,6 +1,8 @@
 ---
 - name: Guix cache server setup
   hosts: all
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts'
   gather_facts: true
   tasks:
     - name: Initialize secondary guix system account
@@ -26,3 +28,16 @@
         state: restarted
         masked: false
         name: guix-publish
+
+    - name: Get supported architectures
+      ansible.builtin.shell: "uname -m"
+      register: architecture
+
+    - name: Save supported architectures
+      delegate_to: localhost
+      run_once: false
+      vars:
+        local_filename: "./{{ inventory_hostname }}_arch"
+      copy:
+        content: "{{ architecture.stdout }}"
+        dest: "{{ local_filename }}"
